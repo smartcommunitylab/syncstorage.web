@@ -59,8 +59,8 @@ public class Util {
     	return fullMapper.convertValue(object, cls);
     }
     
-    public static SyncObjectBean convertToSyncObjectBean(BasicObject o) {
-    	SyncObjectBean result = new SyncObjectBean();
+    public static <T extends SyncObjectBean> T convertToObjectBean(BasicObject o, Class<T> cls) throws InstantiationException, IllegalAccessException {
+    	T result = cls.newInstance();
     	@SuppressWarnings("unchecked")
 		Map<String,Object> map = convert(o, Map.class);
     	result.setContent(map);
@@ -73,7 +73,7 @@ public class Util {
     	return result;
     }
     
-	public static <T extends BasicObject> T convertSyncBeanToBasicObject(SyncObjectBean bean, Class<T> cls) {
+	public static <T extends BasicObject> T convertBeanToBasicObject(SyncObjectBean bean, Class<T> cls) {
     	return convert(bean.getContent(), cls);
     }
 }
