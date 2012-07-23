@@ -241,7 +241,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		if (type != null) {
 			criteria.and("type").is(type);
 		}
-		if (all) {
+		if (!all) {
 			criteria.and("deleted").is(false);
 		}
 		if (user != null) {
