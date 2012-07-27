@@ -25,7 +25,7 @@ import eu.trentorise.smartcampus.presentation.storage.sync.BasicObjectSyncStorag
 
 public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> implements BasicObjectSyncStorage {
 
-	private MongoOperations mongoTemplate = null;
+	protected MongoOperations mongoTemplate = null;
 	
 	private static Long version = 0L;
 	
@@ -110,16 +110,16 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 //		List<S> list = searchWithType(null, null, null, getObjectClass(), null, false, false);
 //		return convert(list);
 		Criteria criteria = createSearchWithTypeCriteria(null, null, null, null, false, false);
-		return find(Query.query(criteria));
+		return find(Query.query(criteria), BasicObject.class);
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<BasicObject> convert(List<S> list) {
+	private <T extends BasicObject> List<T> convert(List<S> list, Class<T> cls) {
 		if (list != null && ! list.isEmpty()) {
-			List<BasicObject> result = new ArrayList<BasicObject>();
+			List<T> result = new ArrayList<T>();
 			for (S sob : list)
 				try {
-					result.add(
+					result.add((T)
 						convertBeanToBasicObject(sob, 
 								(Class<? extends BasicObject>)Thread.currentThread().getContextClassLoader().loadClass(sob.getType())));
 				} catch (ClassNotFoundException e) {
@@ -152,33 +152,32 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 //		List<S> list = searchWithType(null, cls.getCanonicalName(), null, getObjectClass(), null, false, false);
 //		return (List<T>)convert(list);
 		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), null, null, false, false);
-		return find(Query.query(criteria));
+		return find(Query.query(criteria), cls);
 	}
 
 	public <T extends BasicObject> List<T> getObjectsByType(Class<T> cls, String user) throws DataException{
 		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), null, user, false, true);
-		return find(Query.query(criteria));
+		return find(Query.query(criteria), cls);
 	}
 
 	public <T extends BasicObject> List<T> searchObjects(Class<T> cls, Map<String, Object> criteriaMap) throws DataException{
 		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), criteriaMap, null, false, false);
-		return find(Query.query(criteria));
+		return find(Query.query(criteria), cls);
 	}
 
 	public <T extends BasicObject> List<T> searchObjects(Class<T> cls, Map<String, Object> criteriaMap, String user) throws DataException {
 		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), criteriaMap, user, false, true);
-		return find(Query.query(criteria));
+		return find(Query.query(criteria), cls);
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected <T extends BasicObject> List<T> find(Query query) {
+	protected <T extends BasicObject> List<T> find(Query query, Class<T> cls) {
 		List<S> result = mongoTemplate.find(query, getObjectClass()); 
-		return (List<T>)convert(result);
+		return (List<T>)convert(result, cls);
 	}
 
 	public List<BasicObject> getAllObjects(String user) throws DataException{
 		Criteria criteria = createSearchWithTypeCriteria(null, null, null, user, false, true);
-		return find(Query.query(criteria));
+		return find(Query.query(criteria), BasicObject.class);
 	}
 
 	@SuppressWarnings("unchecked")
