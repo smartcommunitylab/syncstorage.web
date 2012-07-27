@@ -107,8 +107,10 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 
 	public List<BasicObject> getAllObjects() throws DataException{
-		List<S> list = searchWithType(null, null, null, getObjectClass(), null, false, false);
-		return convert(list);
+//		List<S> list = searchWithType(null, null, null, getObjectClass(), null, false, false);
+//		return convert(list);
+		Criteria criteria = createSearchWithTypeCriteria(null, null, null, null, false, false);
+		return find(Query.query(criteria));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -146,33 +148,37 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public <T extends BasicObject> List<T> getObjectsByType(Class<T> cls) throws DataException{
-		List<S> list = searchWithType(null, cls.getCanonicalName(), null, getObjectClass(), null, false, false);
-		return (List<T>)convert(list);
+//		List<S> list = searchWithType(null, cls.getCanonicalName(), null, getObjectClass(), null, false, false);
+//		return (List<T>)convert(list);
+		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), null, null, false, false);
+		return find(Query.query(criteria));
 	}
 
-	@SuppressWarnings("unchecked")
 	public <T extends BasicObject> List<T> getObjectsByType(Class<T> cls, String user) throws DataException{
-		List<S> list = searchWithType(null, cls.getCanonicalName(), null, getObjectClass(), user, false, true);
-		return (List<T>)convert(list);
+		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), null, user, false, true);
+		return find(Query.query(criteria));
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T extends BasicObject> List<T> searchObjects(Class<T> cls, Map<String, Object> criteria) throws DataException{
-		List<S> list = searchWithType(null, cls.getCanonicalName(), criteria, getObjectClass(), null, false, false);
-		return (List<T>)convert(list);
+	public <T extends BasicObject> List<T> searchObjects(Class<T> cls, Map<String, Object> criteriaMap) throws DataException{
+		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), criteriaMap, null, false, false);
+		return find(Query.query(criteria));
 	}
 
+	public <T extends BasicObject> List<T> searchObjects(Class<T> cls, Map<String, Object> criteriaMap, String user) throws DataException {
+		Criteria criteria = createSearchWithTypeCriteria(null, cls.getCanonicalName(), criteriaMap, user, false, true);
+		return find(Query.query(criteria));
+	}
+	
 	@SuppressWarnings("unchecked")
-	public <T extends BasicObject> List<T> searchObjects(Class<T> cls, Map<String, Object> criteria, String user) throws DataException {
-		List<S> list = searchWithType(null, cls.getCanonicalName(), criteria, getObjectClass(), user, false, true);
-		return (List<T>)convert(list);
+	protected <T extends BasicObject> List<T> find(Query query) {
+		List<S> result = mongoTemplate.find(query, getObjectClass()); 
+		return (List<T>)convert(result);
 	}
 
 	public List<BasicObject> getAllObjects(String user) throws DataException{
-		List<S> list = searchWithType(null, null, null, getObjectClass(), user, false, true);
-		return convert(list);
+		Criteria criteria = createSearchWithTypeCriteria(null, null, null, user, false, true);
+		return find(Query.query(criteria));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -234,7 +240,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		}
 	}
 
-	private <T> List<T> searchWithType(String id, String type, Map<String, Object> c, Class<T> cls, String user, boolean all, boolean withUser) {
+	private Criteria createSearchWithTypeCriteria(String id, String type, Map<String, Object> c, String user, boolean all, boolean withUser) {
 		Criteria criteria = new Criteria();
 		if (type != null) {
 			criteria.and("type").is(type);
@@ -253,7 +259,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 				criteria.and("content."+key).is(c.get(key));
 			}
 		}
-		return mongoTemplate.find(Query.query(criteria), cls);
+		return criteria;
 	}
 
 	private List<S> searchWithVersion(String user, long fromVersion, long toVersion) {
