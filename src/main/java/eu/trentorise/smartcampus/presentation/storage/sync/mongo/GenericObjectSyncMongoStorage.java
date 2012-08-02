@@ -1,5 +1,6 @@
 package eu.trentorise.smartcampus.presentation.storage.sync.mongo;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,12 +10,15 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
+import com.mongodb.MongoException;
 
 import eu.trentorise.smartcampus.presentation.common.exception.DataException;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
@@ -27,26 +31,28 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 
 	protected MongoOperations mongoTemplate = null;
 	
-	private static Long version = 0L;
-	
 	public GenericObjectSyncMongoStorage(MongoOperations mongoTemplate) {
 		super();
 		this.mongoTemplate = mongoTemplate;
-		version = initVersion(mongoTemplate, getObjectClass());
+		initVersion();
 	}
 
 	public abstract Class<S> getObjectClass();
 
-	private static synchronized long getVersion() {
-		return version++;
+	private final Query versionQuery = Query.query(Criteria.where("_id").is(getObjectClass().getCanonicalName()));
+	private final Update versionUpdate = new Update().inc("value", 1);
+	
+	private long getVersion() {
+		DBObject o = mongoTemplate.findAndModify(versionQuery, versionUpdate, DBObject.class, "counters");
+		return (Long)o.get("value");
 	}
 	
-	private static synchronized long initVersion(MongoOperations mongoTemplate, Class<?> cls) {
-		DBCursor cursor = mongoTemplate.getCollection(mongoTemplate.getCollectionName(cls))
-		.find()
-		.sort(new BasicDBObject("version", -1)).limit(1);
-		if (cursor.hasNext()) return (Long)cursor.next().get("version");
-		return 0;
+	private synchronized void initVersion() {
+		String counterId = getObjectClass().getCanonicalName();
+		DBObject counter = mongoTemplate.findOne(Query.query(Criteria.where("_id").is(counterId)), DBObject.class, "counters");
+		if (counter == null) {
+			mongoTemplate.save(BasicDBObjectBuilder.start("_id", counterId).add("value", 1L).get(), "counters");
+		}
 	}
 
 	public <T extends BasicObject> void storeObject(T object) throws DataException {
@@ -273,7 +279,27 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		return mongoTemplate.find(Query.query(criteria), getObjectClass());
 	}
 
-	public static void main(String[] args) {
-		System.err.println(new Update().set("deleted", true).set("version", 1).getUpdateObject());
+	public static void main(String[] args) throws UnknownHostException, MongoException {
+
+		MongoTemplate mongoTemplate = new MongoTemplate(new Mongo(),"discovertrento"); 
+		
+		String counterId = "discovertrento";
+		DBObject counter = mongoTemplate.findOne(Query.query(Criteria.where("_id").is(counterId)), DBObject.class, "counters");
+		if (counter == null) {
+			mongoTemplate.save(BasicDBObjectBuilder.start("_id", counterId).add("value", 1L).get(), "counters");
+		}
+		
+		DBObject o = mongoTemplate.findAndModify(
+				Query.query(Criteria.where("_id").is(counterId)), 
+				new Update().inc("value", 1), 
+				DBObject.class, 
+				"counters");
+		o = mongoTemplate.findAndModify(
+				Query.query(Criteria.where("_id").is(counterId)), 
+				new Update().inc("value", 1), 
+				DBObject.class, 
+				"counters");
+
+		System.err.println((Long)o.get("value"));
 	}
 }
