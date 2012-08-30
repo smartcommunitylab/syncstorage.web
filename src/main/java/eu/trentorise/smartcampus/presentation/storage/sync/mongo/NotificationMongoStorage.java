@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import eu.trentorise.smartcampus.presentation.common.exception.DataException;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
 import eu.trentorise.smartcampus.presentation.data.NotificationObject;
 import eu.trentorise.smartcampus.presentation.storage.NotificationStorage;
@@ -25,7 +26,8 @@ public class NotificationMongoStorage implements NotificationStorage {
 		mongoTemplate.save(notification);
 	}
 
-	public void storeAllNotifications(Collection<NotificationObject> notifications) {
+	public void storeAllNotifications(
+			Collection<NotificationObject> notifications) {
 		if (notifications != null) {
 			for (NotificationObject no : notifications) {
 				storeNotification(no);
@@ -33,23 +35,32 @@ public class NotificationMongoStorage implements NotificationStorage {
 		}
 	}
 
-	public void deleteNotification(NotificationObject notification) throws NotFoundException {
+	public void deleteNotification(NotificationObject notification)
+			throws NotFoundException {
 		mongoTemplate.remove(notification);
 	}
 
-	public NotificationObject getNotificationById(String id) throws NotFoundException {
+	public NotificationObject getNotificationById(String id)
+			throws NotFoundException {
 		return mongoTemplate.findById(id, NotificationObject.class);
 	}
 
-	public List<NotificationObject> getAllNotifications(String user) {
-		return searchWithTypeAndUser(null, user, null, NotificationObject.class);
+	public List<NotificationObject> getAllNotifications(String user,
+			Long since, Integer position, Integer count) {
+		return searchWithTypeAndUser(null, user, null, null, since, position,
+				count, NotificationObject.class);
 	}
 
-	public List<NotificationObject> searchNotifications(String type, String user, Map<String, Object> criteria) {
-		return searchWithTypeAndUser(type, user, criteria, NotificationObject.class);
+	public List<NotificationObject> searchNotifications(String type,
+			String user, Map<String, Object> criteria, Long since,
+			Integer position, Integer count) {
+		return searchWithTypeAndUser(type, user, criteria, null, since, null,
+				null, NotificationObject.class);
 	}
 
-	private <T> List<T> searchWithTypeAndUser(String type, String user, Map<String, Object> c, Class<T> cls) {
+	private <T> List<T> searchWithTypeAndUser(String type, String user,
+			Map<String, Object> c, Map<String, Object> metadata, Long since,
+			Integer position, Integer count, Class<T> cls) {
 		Criteria criteria = new Criteria();
 		if (type != null) {
 			criteria.and("type").is(type);
@@ -59,11 +70,59 @@ public class NotificationMongoStorage implements NotificationStorage {
 		}
 		if (c != null) {
 			for (String key : c.keySet()) {
-				criteria.and("content."+key).is(c.get(key));
+				criteria.and("content." + key).is(c.get(key));
 			}
 		}
-		return mongoTemplate.find(Query.query(criteria), cls);
+
+		if (since != null) {
+			criteria.and("timestamp").gte(since);
+		}
+
+		if (metadata != null) {
+			for (String key : metadata.keySet()) {
+				criteria.and(key).is(metadata.get(key));
+			}
+		}
+
+		Query query = Query.query(criteria);
+		if (position != null && position > 0) {
+			query.skip(position);
+		}
+
+		if (count != null && count > position) {
+			query.limit(count);
+		}
+
+		return mongoTemplate.find(query, cls);
 	}
 
-	
+	@Override
+	public List<NotificationObject> searchNotificationsByMetadata(String type,
+			String user, Map<String, Object> criteria, Long since,
+			Integer position, Integer count) throws DataException {
+		return searchWithTypeAndUser(type, user, null, criteria, since,
+				position, count, NotificationObject.class);
+	}
+
+	@Override
+	public void updateNotification(NotificationObject notification)
+			throws NotFoundException, DataException {
+		mongoTemplate.save(notification);
+
+	}
+
+	@Override
+	public List<NotificationObject> getAllNotifications(String user)
+			throws DataException {
+		return searchWithTypeAndUser(null, user, null, null, null, null, null,
+				NotificationObject.class);
+	}
+
+	@Override
+	public List<NotificationObject> searchNotifications(String type,
+			String user, Map<String, Object> criteria) throws DataException {
+		return searchWithTypeAndUser(type, user, criteria, null, null, null,
+				null, NotificationObject.class);
+	}
+
 }
