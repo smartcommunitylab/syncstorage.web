@@ -35,14 +35,19 @@ public class NotificationMongoStorage implements NotificationStorage {
 		}
 	}
 
-	public void deleteNotification(NotificationObject notification)
-			throws NotFoundException {
+	public void deleteNotification(NotificationObject notification) {
 		mongoTemplate.remove(notification);
 	}
 
 	public NotificationObject getNotificationById(String id)
 			throws NotFoundException {
-		return mongoTemplate.findById(id, NotificationObject.class);
+		NotificationObject result = mongoTemplate.findById(id,
+				NotificationObject.class);
+		if (result == null) {
+			throw new NotFoundException();
+		} else {
+			return result;
+		}
 	}
 
 	public List<NotificationObject> getAllNotifications(String user,
@@ -106,7 +111,7 @@ public class NotificationMongoStorage implements NotificationStorage {
 
 	@Override
 	public void updateNotification(NotificationObject notification)
-			throws NotFoundException, DataException {
+			throws DataException {
 		mongoTemplate.save(notification);
 
 	}

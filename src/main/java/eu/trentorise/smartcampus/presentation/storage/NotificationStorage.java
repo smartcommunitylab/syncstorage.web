@@ -17,10 +17,10 @@ public interface NotificationStorage {
 			Collection<NotificationObject> notifications) throws DataException;
 
 	public void deleteNotification(NotificationObject notification)
-			throws NotFoundException, DataException;
+			throws DataException;
 
 	public void updateNotification(NotificationObject notification)
-			throws NotFoundException, DataException;
+			throws DataException;
 
 	public NotificationObject getNotificationById(String id)
 			throws NotFoundException, DataException;
