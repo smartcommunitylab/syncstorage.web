@@ -14,11 +14,9 @@ public interface PreferencesStorage {
 	public void storeAll(Collection<PreferenceObject> preferences)
 			throws DataException;
 
-	public void delete(PreferenceObject preference) throws NotFoundException,
-			DataException;
+	public void delete(PreferenceObject preference) throws DataException;
 
-	public void update(PreferenceObject preference) throws NotFoundException,
-			DataException;
+	public void update(PreferenceObject preference) throws DataException;
 
 	public PreferenceObject getById(String id) throws NotFoundException,
 			DataException;

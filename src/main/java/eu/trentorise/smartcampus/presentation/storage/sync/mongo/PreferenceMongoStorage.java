@@ -41,15 +41,13 @@ public class PreferenceMongoStorage implements PreferencesStorage {
 	}
 
 	@Override
-	public void delete(PreferenceObject preference) throws NotFoundException,
-			DataException {
+	public void delete(PreferenceObject preference) throws DataException {
 		mongoTemplate.remove(preference);
 
 	}
 
 	@Override
-	public void update(PreferenceObject preference) throws NotFoundException,
-			DataException {
+	public void update(PreferenceObject preference) throws DataException {
 		mongoTemplate.save(preference);
 
 	}
