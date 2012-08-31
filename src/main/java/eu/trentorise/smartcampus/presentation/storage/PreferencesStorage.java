@@ -21,8 +21,8 @@ public interface PreferencesStorage {
 	public PreferenceObject getById(String id) throws NotFoundException,
 			DataException;
 
-	public List<PreferenceObject> getByLabel(String user, String labelName)
-			throws DataException;
+	public PreferenceObject getByLabel(String user, String labelName)
+			throws DataException, NotFoundException;
 
 	public List<PreferenceObject> getAll(String user) throws DataException;
 

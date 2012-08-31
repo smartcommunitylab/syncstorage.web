@@ -65,8 +65,8 @@ public class PreferenceMongoStorage implements PreferencesStorage {
 	}
 
 	@Override
-	public List<PreferenceObject> getByLabel(String user, String labelName)
-			throws DataException {
+	public PreferenceObject getByLabel(String user, String labelName)
+			throws DataException, NotFoundException {
 		if (user == null || user.isEmpty() || labelName == null
 				|| labelName.isEmpty()) {
 			throw new DataException();
@@ -75,7 +75,13 @@ public class PreferenceMongoStorage implements PreferencesStorage {
 		Criteria criteria = new Criteria();
 		criteria.and("user").is(user);
 		criteria.and("name").is(labelName);
-		return mongoTemplate.find(new Query(criteria), PreferenceObject.class);
+		PreferenceObject result = mongoTemplate.findOne(new Query(criteria),
+				PreferenceObject.class);
+		if (result == null) {
+			throw new NotFoundException();
+		} else {
+			return result;
+		}
 	}
 
 	@Override
