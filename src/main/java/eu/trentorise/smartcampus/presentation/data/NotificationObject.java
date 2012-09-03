@@ -14,6 +14,7 @@ public class NotificationObject {
 	private boolean starred;
 	private String[] labelIds;
 	private String funnelId;
+	private EntityObject[] entities;
 
 	public NotificationObject() {
 		super();
@@ -105,6 +106,14 @@ public class NotificationObject {
 
 	public void setFunnelId(String funnelId) {
 		this.funnelId = funnelId;
+	}
+
+	public EntityObject[] getEntities() {
+		return entities;
+	}
+
+	public void setEntities(EntityObject[] entities) {
+		this.entities = entities;
 	}
 
 }
