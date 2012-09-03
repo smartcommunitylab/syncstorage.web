@@ -26,21 +26,25 @@ public interface NotificationStorage {
 			throws NotFoundException, DataException;
 
 	// for compatibility
-	public List<NotificationObject> getAllNotifications(String user)
-			throws DataException;
+	public List<NotificationObject> getAllNotifications(String user,
+			boolean onlyUnreaded) throws DataException;
 
 	public List<NotificationObject> getAllNotifications(String user,
-			Long since, Integer position, Integer count) throws DataException;
+			Long since, Integer position, Integer count, boolean onlyUnreaded)
+			throws DataException;
 
 	// for compatibility
 	public List<NotificationObject> searchNotifications(String type,
-			String user, Map<String, Object> criteria) throws DataException;
+			String user, Map<String, Object> criteria, boolean onlyUnreaded)
+			throws DataException;
 
 	public List<NotificationObject> searchNotifications(String type,
 			String user, Map<String, Object> criteria, Long since,
-			Integer position, Integer count) throws DataException;
+			Integer position, Integer count, boolean onlyUnreaded)
+			throws DataException;
 
 	public List<NotificationObject> searchNotificationsByMetadata(String type,
 			String user, Map<String, Object> criteria, Long since,
-			Integer position, Integer count) throws DataException;
+			Integer position, Integer count, boolean onlyUnreaded)
+			throws DataException;
 }

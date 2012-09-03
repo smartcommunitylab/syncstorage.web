@@ -16,6 +16,8 @@ public class NotificationObject {
 	private String funnelId;
 	private EntityObject[] entities;
 
+	private boolean readed;
+
 	public NotificationObject() {
 		super();
 	}
@@ -114,6 +116,14 @@ public class NotificationObject {
 
 	public void setEntities(EntityObject[] entities) {
 		this.entities = entities;
+	}
+
+	public boolean isReaded() {
+		return readed;
+	}
+
+	public void setReaded(boolean readed) {
+		this.readed = readed;
 	}
 
 }
