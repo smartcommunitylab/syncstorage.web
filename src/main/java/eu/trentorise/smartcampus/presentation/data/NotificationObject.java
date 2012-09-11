@@ -70,14 +70,6 @@ public class NotificationObject {
 		this.starred = starred;
 	}
 
-	public String[] getLabels() {
-		return labelIds;
-	}
-
-	public void setLabels(String[] labelIds) {
-		this.labelIds = labelIds;
-	}
-
 	public String getTitle() {
 		return title;
 	}
