@@ -186,12 +186,21 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		return find(Query.query(criteria), BasicObject.class);
 	}
 
-	@SuppressWarnings("unchecked")
+	@Override
+	public SyncData getSyncData(long since, String user, boolean userDataOnly) throws DataException {
+		return retrieveSyncData(since, user, userDataOnly);
+	}
+
 	public SyncData getSyncData(long since, String user) throws DataException {
+		return retrieveSyncData(since, user, false);
+	}
+
+	@SuppressWarnings("unchecked")
+	private SyncData retrieveSyncData(long since, String user, boolean userDataOnly) {
 		long newVersion = getVersion();
 		SyncData syncData = new SyncData();
 		syncData.setVersion(newVersion);
-		List<S> list = searchWithVersion(user, since, newVersion);
+		List<S> list = searchWithVersion(user, since, newVersion, userDataOnly);
 		if (list != null && !list.isEmpty()) {
 			Map<String,List<BasicObject>> updated = new HashMap<String, List<BasicObject>>();
 			Map<String,List<String>> deleted = new HashMap<String, List<String>>();
@@ -267,9 +276,9 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		return criteria;
 	}
 
-	private List<S> searchWithVersion(String user, long fromVersion, long toVersion) {
+	private List<S> searchWithVersion(String user, long fromVersion, long toVersion, boolean userDataOnly) {
 		Criteria criteria = new Criteria();
-		if (user != null) {
+		if (user != null && !userDataOnly) {
 			criteria.and("user").in(user, null);
 		} else {
 			criteria.and("user").is(user);
