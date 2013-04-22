@@ -26,6 +26,9 @@ public class SyncData {
 	private Map<String,List<BasicObject>> updated = new HashMap<String, List<BasicObject>>();
 	private Map<String,List<String>> deleted = new HashMap<String, List<String>>();
 	
+	private Map<String, Object> exclude;
+	private Map<String, Object> include;
+	
 	public SyncData() {
 		super();
 	}
@@ -54,4 +57,20 @@ public class SyncData {
 		this.deleted = deleted;
 	}
 
+	public Map<String, Object> getExclude() {
+		return exclude;
+	}
+
+	public void setExclude(Map<String, Object> exclude) {
+		this.exclude = exclude;
+	}
+
+	public Map<String, Object> getInclude() {
+		return include;
+	}
+
+	public void setInclude(Map<String, Object> include) {
+		this.include = include;
+	}
+	
 }

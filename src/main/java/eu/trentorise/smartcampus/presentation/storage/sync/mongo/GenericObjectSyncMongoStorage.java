@@ -204,19 +204,29 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 
 	@Override
 	public SyncData getSyncData(long since, String user, boolean userDataOnly) throws DataException {
-		return retrieveSyncData(since, user, userDataOnly);
+		return retrieveSyncData(since, user, userDataOnly, null, null);
 	}
 
 	public SyncData getSyncData(long since, String user) throws DataException {
-		return retrieveSyncData(since, user, false);
+		return retrieveSyncData(since, user, false, null, null);
+	}
+	
+	@Override
+	public SyncData getSyncData(long since, String user, Map<String, Object> include, Map<String, Object> exclude) throws DataException {
+		return retrieveSyncData(since, user, false, include, exclude);
+	}
+
+	@Override
+	public SyncData getSyncData(long since, String user, boolean userDataOnly, Map<String, Object> include, Map<String, Object> exclude) throws DataException {
+		return retrieveSyncData(since, user, userDataOnly, include, exclude);
 	}
 
 	@SuppressWarnings("unchecked")
-	private SyncData retrieveSyncData(long since, String user, boolean userDataOnly) {
+	private SyncData retrieveSyncData(long since, String user, boolean userDataOnly, Map<String, Object> include, Map<String, Object> exclude) {
 		long newVersion = getVersion();
 		SyncData syncData = new SyncData();
 		syncData.setVersion(newVersion);
-		List<S> list = searchWithVersion(user, since, newVersion, userDataOnly);
+		List<S> list = searchWithVersion(user, since, newVersion, userDataOnly, include, exclude);
 		if (list != null && !list.isEmpty()) {
 			Map<String,List<BasicObject>> updated = new HashMap<String, List<BasicObject>>();
 			Map<String,List<String>> deleted = new HashMap<String, List<String>>();
@@ -235,7 +245,8 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 						updated.put(sob.getType(), updatedList);
 					}
 					try {
-						updatedList.add(Util.convertBeanToBasicObject(sob, (Class<? extends BasicObject>)Thread.currentThread().getContextClassLoader().loadClass(sob.getType())));
+						BasicObject b = Util.convertBeanToBasicObject(sob, (Class<? extends BasicObject>)Thread.currentThread().getContextClassLoader().loadClass(sob.getType()));
+						updatedList.add(b);
 					} catch (ClassNotFoundException e) {
 						continue;
 					}
@@ -292,7 +303,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		return criteria;
 	}
 
-	private List<S> searchWithVersion(String user, long fromVersion, long toVersion, boolean userDataOnly) {
+	private List<S> searchWithVersion(String user, long fromVersion, long toVersion, boolean userDataOnly, Map<String, Object> include, Map<String, Object> exclude) {
 		Criteria criteria = new Criteria();
 		if (user != null && !userDataOnly) {
 			criteria.and("user").in(user, null);
@@ -300,6 +311,26 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 			criteria.and("user").is(user);
 		}
 		criteria.and("version").gt(fromVersion).lt(toVersion); 
+		if (include != null && !include.isEmpty()) {
+			for (String key : include.keySet()) {
+				Object value = include.get(key);
+				if (value instanceof Collection) {
+					criteria.and("content."+key).in((Collection<?>)value);
+				} else {
+					criteria.and("content."+key).is(value);
+				}
+			}
+		}
+		if (exclude != null && !exclude.isEmpty()) {
+			for (String key : exclude.keySet()) {
+				Object value = exclude.get(key);
+				if (value instanceof Collection) {
+					criteria.and("content."+key).nin((Collection<?>)value);
+				} else {
+					criteria.and("content."+key).ne(value);
+				}
+			}
+		}
 		
 		return mongoTemplate.find(Query.query(criteria), getObjectClass());
 	}

@@ -68,6 +68,10 @@ public class Util {
 		
 		Map<String,List<String>> deleted = (Map<String,List<String>>)requestMap.get("deleted");
 		data.setDeleted(deleted);
+		
+		data.setExclude((Map<String, Object>) requestMap.get("exclude"));
+		data.setInclude((Map<String, Object>) requestMap.get("include"));
+		
     	return new SyncDataRequest(data, since);
     } 
     
