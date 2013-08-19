@@ -154,19 +154,19 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 
 	public <T extends BasicObject> T getObjectById(String id, Class<T> cls) throws NotFoundException, DataException {
 		S bean = mongoTemplate.findById(id, getObjectClass());
-		if (bean != null) return Util.convertBeanToBasicObject(bean,cls);
+		if (bean != null && !bean.isDeleted()) return Util.convertBeanToBasicObject(bean,cls);
 		throw new NotFoundException(id);
 	}
 
 	@SuppressWarnings("unchecked")
 	public BasicObject getObjectById(String id) throws NotFoundException, DataException {
 		S bo = mongoTemplate.findById(id, getObjectClass()); 
-		if (bo == null) return null;
+		if (bo == null || bo.isDeleted()) throw new NotFoundException();
 		try {
 			Class<? extends BasicObject> cls = (Class<? extends BasicObject>)Thread.currentThread().getContextClassLoader().loadClass(bo.getType());
 			return Util.convertBeanToBasicObject(bo,cls);
 		} catch (ClassNotFoundException e) {
-			return null;
+			throw new DataException(e);
 		}
 	}
 
