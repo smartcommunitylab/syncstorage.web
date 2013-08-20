@@ -89,6 +89,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 
 	protected <T extends BasicObject> S convertToObjectBean(T object) throws InstantiationException, IllegalAccessException {
+		if (object.getUpdateTime() <= 0) object.setUpdateTime(System.currentTimeMillis());
 		return Util.convertToObjectBean(object, getObjectClass());
 	}
 
