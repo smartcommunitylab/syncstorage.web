@@ -94,6 +94,8 @@ public class Util {
     }
     
 	public static <T extends BasicObject> T convertBeanToBasicObject(SyncObjectBean bean, Class<T> cls) {
-    	return convert(bean.getContent(), cls);
+    	T res = convert(bean.getContent(), cls);
+    	if (res.getUpdateTime() <= 0) res.setUpdateTime(bean.getUpdateTime()); 
+    	return res;
     }
 }
