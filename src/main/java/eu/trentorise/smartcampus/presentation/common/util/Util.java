@@ -24,7 +24,6 @@ import java.util.Map;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.introspect.NopAnnotationIntrospector;
 
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
 import eu.trentorise.smartcampus.presentation.data.SyncData;
@@ -35,13 +34,12 @@ public class Util {
 
     private static ObjectMapper fullMapper = new ObjectMapper();
     static {
-        fullMapper.setAnnotationIntrospector(NopAnnotationIntrospector.nopInstance());
-        fullMapper.getDeserializationConfig().set(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING, true);
-        fullMapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        fullMapper.getDeserializationConfig().set(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING, true);
+        fullMapper.enable(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING);
+        fullMapper.disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-        fullMapper.getSerializationConfig().set(SerializationConfig.Feature.WRITE_ENUMS_USING_TO_STRING, true);
-        fullMapper.getSerializationConfig().set(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS, false);
+        fullMapper.enable(SerializationConfig.Feature.WRITE_ENUMS_USING_TO_STRING);
+        fullMapper.disable(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS);
+
     }
 
     @SuppressWarnings("unchecked")
