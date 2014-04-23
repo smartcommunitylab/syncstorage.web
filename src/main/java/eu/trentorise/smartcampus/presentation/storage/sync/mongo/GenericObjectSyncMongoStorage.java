@@ -58,8 +58,12 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	private final Query versionQuery = Query.query(Criteria.where("_id").is(getObjectClass().getCanonicalName()));
 	private final Update versionUpdate = new Update().inc("value", 1);
 	
-	private long getVersion() {
+	private long getNewVersion() {
 		DBObject o = mongoTemplate.findAndModify(versionQuery, versionUpdate, DBObject.class, "counters");
+		return (Long)o.get("value");
+	}
+	private long getVersion() {
+		DBObject o = mongoTemplate.findOne(versionQuery, DBObject.class, "counters");
 		return (Long)o.get("value");
 	}
 	
@@ -73,7 +77,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 
 	public <T extends BasicObject> void storeObject(T object) throws DataException {
 		try {
-			storeObject(object, getVersion());
+			storeObject(object, getNewVersion());
 		} catch (Exception e) {
 			throw new DataException("Failed to store data", e);
 		}
@@ -110,7 +114,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 	
 	public <T extends BasicObject> void deleteObject(T object) throws DataException {
-		object.setVersion(getVersion());
+		object.setVersion(getNewVersion());
 		S sob;
 		try {
 			sob = convertToObjectBean(object);
@@ -122,7 +126,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 
 	public void deleteObjectById(String id) throws DataException{
-		deleteObjectById(id, getVersion());
+		deleteObjectById(id, getNewVersion());
 	}
 	
 	private void deleteObjectById(String id, long version) {
