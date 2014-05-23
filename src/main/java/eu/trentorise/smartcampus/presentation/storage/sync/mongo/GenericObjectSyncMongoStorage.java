@@ -231,7 +231,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		long newVersion = getVersion();
 		SyncData syncData = new SyncData();
 		syncData.setVersion(newVersion);
-		List<S> list = searchWithVersion(user, since, newVersion, userDataOnly, include, exclude);
+		List<S> list = searchWithVersion(user, since-1, newVersion, userDataOnly, include, exclude);
 		if (list != null && !list.isEmpty()) {
 			Map<String,List<BasicObject>> updated = new HashMap<String, List<BasicObject>>();
 			Map<String,List<String>> deleted = new HashMap<String, List<String>>();
