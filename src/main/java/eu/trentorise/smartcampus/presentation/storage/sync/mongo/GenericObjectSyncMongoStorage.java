@@ -54,20 +54,21 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 
 	public abstract Class<S> getObjectClass();
+	public abstract String getCollectionName(Class<?> cls);
 
 	private final Query versionQuery = Query.query(Criteria.where("_id").is(getObjectClass().getCanonicalName()));
 	private final Update versionUpdate = new Update().inc("value", 1);
 	
-	private long getNewVersion() {
+	protected long getNewVersion() {
 		DBObject o = mongoTemplate.findAndModify(versionQuery, versionUpdate, DBObject.class, "counters");
 		return (Long)o.get("value");
 	}
-	private long getVersion() {
+	protected long getVersion() {
 		DBObject o = mongoTemplate.findOne(versionQuery, DBObject.class, "counters");
 		return (Long)o.get("value");
 	}
 	
-	private synchronized void initVersion() {
+	protected synchronized void initVersion() {
 		String counterId = getObjectClass().getCanonicalName();
 		DBObject counter = mongoTemplate.findOne(Query.query(Criteria.where("_id").is(counterId)), DBObject.class, "counters");
 		if (counter == null) {
@@ -83,13 +84,13 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 		}
 	}
 
-	private <T extends BasicObject> void storeObject(T object, long version) throws InstantiationException, IllegalAccessException {
+	protected <T extends BasicObject> void storeObject(T object, long version) throws InstantiationException, IllegalAccessException {
 		object.setVersion(version);
 		if (object.getId() == null) {
 			object.setId(new ObjectId().toString());
 		}
 		S sob = convertToObjectBean(object);
-		mongoTemplate.save(sob);
+		mongoTemplate.save(sob, getCollectionName(sob.getClass()));
 	}
 
 	protected <T extends BasicObject> S convertToObjectBean(T object) throws InstantiationException, IllegalAccessException {
@@ -122,15 +123,15 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 			throw new DataException("Failed to store data object", e);
 		}
 		sob.setDeleted(true);
-		mongoTemplate.save(sob);
+		mongoTemplate.save(sob, getCollectionName(sob.getClass()));
 	}
 
 	public void deleteObjectById(String id) throws DataException{
 		deleteObjectById(id, getNewVersion());
 	}
 	
-	private void deleteObjectById(String id, long version) {
-		mongoTemplate.findAndModify(Query.query(Criteria.where("id").is(id)),new Update().set("deleted", true).set("version", version), getObjectClass());
+	protected void deleteObjectById(String id, long version) {
+		mongoTemplate.findAndModify(Query.query(Criteria.where("id").is(id)),new Update().set("deleted", true).set("version", version), getObjectClass(), getCollectionName(getObjectClass()));
 	}
 
 	public List<BasicObject> getAllObjects() throws DataException{
@@ -141,7 +142,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends BasicObject> List<T> convert(List<S> list, Class<T> cls) {
+	protected <T extends BasicObject> List<T> convert(List<S> list, Class<T> cls) {
 		if (list != null && ! list.isEmpty()) {
 			List<T> result = new ArrayList<T>();
 			for (S sob : list)
@@ -158,14 +159,14 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 
 	public <T extends BasicObject> T getObjectById(String id, Class<T> cls) throws NotFoundException, DataException {
-		S bean = mongoTemplate.findById(id, getObjectClass());
+		S bean = mongoTemplate.findById(id, getObjectClass(), getCollectionName(getObjectClass()));
 		if (bean != null && !bean.isDeleted()) return Util.convertBeanToBasicObject(bean,cls);
 		throw new NotFoundException(id);
 	}
 
 	@SuppressWarnings("unchecked")
 	public BasicObject getObjectById(String id) throws NotFoundException, DataException {
-		S bo = mongoTemplate.findById(id, getObjectClass()); 
+		S bo = mongoTemplate.findById(id, getObjectClass(), getCollectionName(getObjectClass())); 
 		if (bo == null || bo.isDeleted()) throw new NotFoundException();
 		try {
 			Class<? extends BasicObject> cls = (Class<? extends BasicObject>)Thread.currentThread().getContextClassLoader().loadClass(bo.getType());
@@ -198,7 +199,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 	}
 	
 	protected <T extends BasicObject> List<T> find(Query query, Class<T> cls) {
-		List<S> result = mongoTemplate.find(query, getObjectClass()); 
+		List<S> result = mongoTemplate.find(query, getObjectClass(), getCollectionName(getObjectClass())); 
 		return (List<T>)convert(result, cls);
 	}
 
@@ -337,7 +338,7 @@ public abstract class GenericObjectSyncMongoStorage<S extends SyncObjectBean> im
 			}
 		}
 		
-		return mongoTemplate.find(Query.query(criteria), getObjectClass());
+		return mongoTemplate.find(Query.query(criteria), getObjectClass(), getCollectionName(getObjectClass()));
 	}
 
 	public static void main(String[] args) throws UnknownHostException, MongoException {

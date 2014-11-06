@@ -24,6 +24,7 @@ import java.util.Map;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
 import eu.trentorise.smartcampus.presentation.data.SyncData;
@@ -39,6 +40,8 @@ public class Util {
 
         fullMapper.enable(SerializationConfig.Feature.WRITE_ENUMS_USING_TO_STRING);
         fullMapper.disable(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS);
+        fullMapper.disable(SerializationConfig.Feature.WRITE_NULL_MAP_VALUES);
+        fullMapper.disable(SerializationConfig.Feature.WRITE_NULL_PROPERTIES);
 
     }
 

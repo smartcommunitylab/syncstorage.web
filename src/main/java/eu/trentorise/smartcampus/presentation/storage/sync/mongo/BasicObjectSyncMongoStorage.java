@@ -29,4 +29,9 @@ public class BasicObjectSyncMongoStorage extends GenericObjectSyncMongoStorage<S
 		return SyncObjectBean.class;
 	}
 
+	@Override
+	public String getCollectionName(Class<?> cls) {
+		return mongoTemplate.getCollectionName(cls);
+	}
+
 }
